@@ -444,6 +444,46 @@ export class MemStorage implements IStorage {
   
   async getBidderAnalytics(): Promise<any> {
     const bidders = Array.from(this.bidders.values());
+    
+  // Inventory Item methods
+  async getInventoryItems(): Promise<InventoryItem[]> {
+    return Array.from(this.inventoryItems.values());
+  }
+  
+  async getInventoryItem(id: number): Promise<InventoryItem | undefined> {
+    return this.inventoryItems.get(id);
+  }
+  
+  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
+    const id = this.currentInventoryItemId++;
+    const newItem: InventoryItem = { 
+      ...item, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.inventoryItems.set(id, newItem);
+    return newItem;
+  }
+  
+  async updateInventoryItem(id: number, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+    const existingItem = this.inventoryItems.get(id);
+    if (!existingItem) return undefined;
+    
+    const updatedItem = { 
+      ...existingItem, 
+      ...item, 
+      lastUpdated: new Date() 
+    };
+    this.inventoryItems.set(id, updatedItem);
+    return updatedItem;
+  }
+  
+  async deleteInventoryItem(id: number): Promise<boolean> {
+    return this.inventoryItems.delete(id);
+  }
+  
+  async getBidderAnalytics(): Promise<any> {
+    const bidders = Array.from(this.bidders.values());
     const bids = Array.from(this.bids.values());
     
     const qualifiedBidders = bidders.filter(b => b.verified).length;

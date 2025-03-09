@@ -194,6 +194,29 @@ export const insertAiInsightSchema = createInsertSchema(aiInsights).pick({
   metadata: true,
 });
 
+// Inventory Item schema
+export const inventoryItems = pgTable("inventory_items", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  categoryId: integer("category_id").notNull(),
+  sku: text("sku").notNull(),
+  quantity: integer("quantity").notNull().default(0),
+  minQuantity: integer("min_quantity").notNull().default(0),
+  location: text("location"),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
+export const insertInventoryItemSchema = createInsertSchema(inventoryItems).pick({
+  name: true,
+  description: true,
+  categoryId: true,
+  sku: true,
+  quantity: true,
+  minQuantity: true,
+  location: true,
+});
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -203,6 +226,9 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 export type InventoryCategory = typeof inventoryCategories.$inferSelect;
 export type InsertInventoryCategory = z.infer<typeof insertInventoryCategorySchema>;
+
+export type InventoryItem = typeof inventoryItems.$inferSelect;
+export type InsertInventoryItem = z.infer<typeof insertInventoryItemSchema>;
 
 export type Tender = typeof tenders.$inferSelect;
 export type InsertTender = z.infer<typeof insertTenderSchema>;

@@ -41,8 +41,24 @@ model InventoryCategory {
   description String?
   code        String
   tenderItems TenderItem[]
+  inventoryItems InventoryItem[]
 
   @@map("inventory_categories")
+}
+
+model InventoryItem {
+  id          Int               @id @default(autoincrement())
+  name        String
+  description String?
+  category    InventoryCategory @relation(fields: [categoryId], references: [id])
+  categoryId  Int               @map("category_id")
+  sku         String
+  quantity    Int               @default(0)
+  minQuantity Int               @default(0) @map("min_quantity")
+  location    String?
+  lastUpdated DateTime          @default(now()) @map("last_updated")
+
+  @@map("inventory_items")
 }
 
 // Tender schema

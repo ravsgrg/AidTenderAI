@@ -522,6 +522,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Inventory Item routes
+  app.get("/api/inventory-items", async (req, res) => {
+    try {
+      const items = await storage.getInventoryItems();
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inventory items" });
+    }
+  });
+
+  app.get("/api/inventory-items/:id", async (req, res) => {
+    try {
+      const item = await storage.getInventoryItem(Number(req.params.id));
+      if (!item) {
+        return res.status(404).json({ message: "Inventory item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inventory item" });
+    }
+  });
+
+  app.post("/api/inventory-items", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertInventoryItemSchema.parse(req.body);
+      const item = await storage.createInventoryItem(validatedData);
+      res.status(201).json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid inventory item data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create inventory item" });
+    }
+  });
+
+  app.put("/api/inventory-items/:id", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertInventoryItemSchema.partial().parse(req.body);
+      const item = await storage.updateInventoryItem(Number(req.params.id), validatedData);
+      if (!item) {
+        return res.status(404).json({ message: "Inventory item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid inventory item data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update inventory item" });
+    }
+  });
+
+  app.delete("/api/inventory-items/:id", isAuthenticated, async (req, res) => {
+    try {
+      const success = await storage.deleteInventoryItem(Number(req.params.id));
+      if (!success) {
+        return res.status(404).json({ message: "Inventory item not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete inventory item" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

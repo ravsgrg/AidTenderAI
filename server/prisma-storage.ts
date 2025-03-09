@@ -3,6 +3,7 @@ import {
   User, InsertUser,
   Category, InsertCategory,
   InventoryCategory, InsertInventoryCategory,
+  InventoryItem, InsertInventoryItem,
   Tender, InsertTender,
   TenderItem, InsertTenderItem,
   Bidder, InsertBidder,
@@ -143,6 +144,60 @@ export class PrismaStorage implements IStorage {
   async deleteInventoryCategory(id: number): Promise<boolean> {
     try {
       await this.prisma.inventoryCategory.delete({
+        where: { id }
+      });
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+  
+  // Inventory Item methods
+  async getInventoryItems(): Promise<InventoryItem[]> {
+    const items = await this.prisma.inventoryItem.findMany();
+    return items as InventoryItem[];
+  }
+
+  async getInventoryItem(id: number): Promise<InventoryItem | undefined> {
+    const item = await this.prisma.inventoryItem.findUnique({
+      where: { id }
+    });
+    return item as InventoryItem;
+  }
+
+  async createInventoryItem(item: InsertInventoryItem): Promise<InventoryItem> {
+    const newItem = await this.prisma.inventoryItem.create({
+      data: {
+        name: item.name,
+        description: item.description || null,
+        categoryId: item.categoryId,
+        sku: item.sku,
+        quantity: item.quantity || 0,
+        minQuantity: item.minQuantity || 0,
+        location: item.location || null,
+      }
+    });
+    return newItem as InventoryItem;
+  }
+
+  async updateInventoryItem(id: number, item: Partial<InsertInventoryItem>): Promise<InventoryItem | undefined> {
+    try {
+      const updatedItem = await this.prisma.inventoryItem.update({
+        where: { id },
+        data: {
+          ...item,
+          lastUpdated: new Date()
+        }
+      });
+      return updatedItem as InventoryItem;
+    } catch (err) {
+      return undefined;
+    }
+  }
+
+  async deleteInventoryItem(id: number): Promise<boolean> {
+    try {
+      await this.prisma.inventoryItem.delete({
         where: { id }
       });
       return true;
