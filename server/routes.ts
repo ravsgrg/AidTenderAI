@@ -10,7 +10,8 @@ import {
   insertBidderSchema, 
   insertBidSchema, 
   insertBidItemSchema,
-  insertAiInsightSchema
+  insertAiInsightSchema,
+  insertInventoryCategorySchema
 } from "@shared/schema";
 
 // Helper for checking authentication
@@ -85,6 +86,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Inventory Category routes
+  app.get("/api/inventory-categories", async (req, res) => {
+    try {
+      const categories = await storage.getInventoryCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inventory categories" });
+    }
+  });
+
+  app.get("/api/inventory-categories/:id", async (req, res) => {
+    try {
+      const category = await storage.getInventoryCategory(Number(req.params.id));
+      if (!category) {
+        return res.status(404).json({ message: "Inventory category not found" });
+      }
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inventory category" });
+    }
+  });
+
+  app.post("/api/inventory-categories", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertInventoryCategorySchema.parse(req.body);
+      const category = await storage.createInventoryCategory(validatedData);
+      res.status(201).json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid inventory category data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create inventory category" });
+    }
+  });
+
+  app.put("/api/inventory-categories/:id", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertInventoryCategorySchema.partial().parse(req.body);
+      const category = await storage.updateInventoryCategory(Number(req.params.id), validatedData);
+      if (!category) {
+        return res.status(404).json({ message: "Inventory category not found" });
+      }
+      res.json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid inventory category data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update inventory category" });
+    }
+  });
+
+  app.delete("/api/inventory-categories/:id", isAuthenticated, async (req, res) => {
+    try {
+      const success = await storage.deleteInventoryCategory(Number(req.params.id));
+      if (!success) {
+        return res.status(404).json({ message: "Inventory category not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete inventory category" });
     }
   });
 

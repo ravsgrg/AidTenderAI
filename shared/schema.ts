@@ -51,24 +51,49 @@ export const insertTenderSchema = createInsertSchema(tenders).pick({
   createdBy: true,
 });
 
+// Inventory Category schema
+export const inventoryCategories = pgTable("inventory_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  code: text("code").notNull(),
+});
+
+export const insertInventoryCategorySchema = createInsertSchema(inventoryCategories).pick({
+  name: true,
+  description: true,
+  code: true,
+});
+
 // Tender Item schema
 export const tenderItems = pgTable("tender_items", {
   id: serial("id").primaryKey(),
   tenderId: integer("tender_id").notNull(),
+  categoryId: integer("category_id").notNull(),
   name: text("name").notNull(),
   description: text("description"),
   quantity: integer("quantity").notNull(),
   unit: text("unit").notNull(), // e.g. pcs, kg, m
   estimatedPrice: doublePrecision("estimated_price"),
+  sku: text("sku"), // Stock Keeping Unit for inventory
+  minQuantity: integer("min_quantity"), // Minimum quantity for inventory alert
+  currentStock: integer("current_stock").default(0), // Current available stock
+  location: text("location"), // Storage location
+  lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
 export const insertTenderItemSchema = createInsertSchema(tenderItems).pick({
   tenderId: true,
+  categoryId: true,
   name: true,
   description: true,
   quantity: true,
   unit: true,
   estimatedPrice: true,
+  sku: true,
+  minQuantity: true,
+  currentStock: true,
+  location: true,
 });
 
 // Bidder schema
@@ -119,15 +144,31 @@ export const bidItems = pgTable("bid_items", {
   id: serial("id").primaryKey(),
   bidId: integer("bid_id").notNull(),
   tenderItemId: integer("tender_item_id").notNull(),
+  categoryId: integer("category_id").notNull(),
   unitPrice: doublePrecision("unit_price").notNull(),
   totalPrice: doublePrecision("total_price").notNull(),
+  alternativeItem: boolean("alternative_item").default(false), // If bidder is offering an alternative item
+  alternativeItemName: text("alternative_item_name"),
+  alternativeItemDescription: text("alternative_item_description"),
+  alternativeItemSku: text("alternative_item_sku"),
+  deliveryTimeInDays: integer("delivery_time_days"),
+  warrantyPeriodInDays: integer("warranty_period_days"),
+  complianceNotes: text("compliance_notes"),
 });
 
 export const insertBidItemSchema = createInsertSchema(bidItems).pick({
   bidId: true,
   tenderItemId: true,
+  categoryId: true,
   unitPrice: true,
   totalPrice: true,
+  alternativeItem: true,
+  alternativeItemName: true,
+  alternativeItemDescription: true,
+  alternativeItemSku: true,
+  deliveryTimeInDays: true,
+  warrantyPeriodInDays: true,
+  complianceNotes: true,
 });
 
 // AI Insight schema
@@ -159,6 +200,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type InventoryCategory = typeof inventoryCategories.$inferSelect;
+export type InsertInventoryCategory = z.infer<typeof insertInventoryCategorySchema>;
 
 export type Tender = typeof tenders.$inferSelect;
 export type InsertTender = z.infer<typeof insertTenderSchema>;

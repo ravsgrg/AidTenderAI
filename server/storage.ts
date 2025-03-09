@@ -1,6 +1,7 @@
 import { 
   users, User, InsertUser, 
   categories, Category, InsertCategory,
+  inventoryCategories, InventoryCategory, InsertInventoryCategory,
   tenders, Tender, InsertTender,
   tenderItems, TenderItem, InsertTenderItem,
   bidders, Bidder, InsertBidder,
@@ -25,6 +26,13 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<boolean>;
+  
+  // Inventory Category methods
+  getInventoryCategories(): Promise<InventoryCategory[]>;
+  getInventoryCategory(id: number): Promise<InventoryCategory | undefined>;
+  createInventoryCategory(category: InsertInventoryCategory): Promise<InventoryCategory>;
+  updateInventoryCategory(id: number, category: Partial<InsertInventoryCategory>): Promise<InventoryCategory | undefined>;
+  deleteInventoryCategory(id: number): Promise<boolean>;
   
   // Tender methods
   getTenders(): Promise<Tender[]>;
@@ -82,6 +90,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private categories: Map<number, Category>;
+  private inventoryCategories: Map<number, InventoryCategory>;
   private tenders: Map<number, Tender>;
   private tenderItems: Map<number, TenderItem>;
   private bidders: Map<number, Bidder>;
@@ -93,6 +102,7 @@ export class MemStorage implements IStorage {
   
   currentUserId: number;
   currentCategoryId: number;
+  currentInventoryCategoryId: number;
   currentTenderId: number;
   currentTenderItemId: number;
   currentBidderId: number;
