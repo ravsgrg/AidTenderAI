@@ -8,7 +8,8 @@ import {
   Settings,
   Bot,
   Brain,
-  Lightbulb
+  Lightbulb,
+  Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,11 +19,11 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
-  
+
   const isRouteActive = (path: string) => {
     return location === path || (path !== '/' && location.startsWith(path));
   };
-  
+
   const sidebarItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard className="mr-3 h-5 w-5" /> },
     { path: '/tenders', label: 'Tenders', icon: <ListTodo className="mr-3 h-5 w-5" /> },
@@ -32,7 +33,7 @@ export function Sidebar({ className }: SidebarProps) {
     { path: '/contracts', label: 'Contracts', icon: <FileText className="mr-3 h-5 w-5" /> },
     { path: '/settings', label: 'Settings', icon: <Settings className="mr-3 h-5 w-5" /> },
   ];
-  
+
   const aiItems = [
     { path: '/ai/predictions', label: 'Bid Predictions', icon: <Bot className="mr-2 h-4 w-4 text-primary-400" /> },
     { path: '/ai/market-analysis', label: 'Market Analysis', icon: <Brain className="mr-2 h-4 w-4 text-primary-400" /> },
@@ -47,7 +48,7 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
         <h1 className="text-xl font-semibold">TenderAI</h1>
       </div>
-      
+
       <nav className="mt-5 flex-1">
         <ul>
           {sidebarItems.map((item) => (
@@ -64,7 +65,7 @@ export function Sidebar({ className }: SidebarProps) {
             </li>
           ))}
         </ul>
-        
+
         <div className="px-4 mt-10">
           <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">AI Insights</h2>
           <ul>
