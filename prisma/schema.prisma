@@ -1,0 +1,161 @@
+// This is your Prisma schema file for TenderAI application
+// Converted from Drizzle ORM schema to Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User schema
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  fullName  String   @map("full_name")
+  role      String   @default("user")
+  tenders   Tender[]
+
+  @@map("users")
+}
+
+// Category schema
+model Category {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  tenders     Tender[]
+  tenderItems TenderItem[]
+  bidItems    BidItem[]
+
+  @@map("categories")
+}
+
+// Inventory Category schema
+model InventoryCategory {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  code        String
+  tenderItems TenderItem[]
+
+  @@map("inventory_categories")
+}
+
+// Tender schema
+model Tender {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  categoryId  Int         @map("category_id")
+  status      String      @default("draft") // draft, open, closed, awarded
+  deadline    DateTime
+  createdBy   Int         @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  creator     User        @relation(fields: [createdBy], references: [id])
+  items       TenderItem[]
+  bids        Bid[]
+  aiInsights  AiInsight[]
+
+  @@map("tenders")
+}
+
+// Tender Item schema
+model TenderItem {
+  id                Int                @id @default(autoincrement())
+  tender            Tender             @relation(fields: [tenderId], references: [id])
+  tenderId          Int                @map("tender_id")
+  category          Category           @relation(fields: [categoryId], references: [id])
+  categoryId        Int                @map("category_id")
+  inventoryCategory InventoryCategory? @relation(fields: [inventoryCategoryId], references: [id])
+  inventoryCategoryId Int?             @map("inventory_category_id")
+  name              String
+  description       String?
+  quantity          Int
+  unit              String
+  estimatedPrice    Float?             @map("estimated_price")
+  sku               String?
+  minQuantity       Int?               @map("min_quantity")
+  currentStock      Int?               @default(0) @map("current_stock")
+  location          String?
+  lastUpdated       DateTime?          @default(now()) @map("last_updated")
+  bidItems          BidItem[]
+
+  @@map("tender_items")
+}
+
+// Bidder schema
+model Bidder {
+  id            Int         @id @default(autoincrement())
+  name          String
+  contactPerson String      @map("contact_person")
+  email         String
+  phone         String
+  address       String?
+  rating        Int?
+  verified      Boolean     @default(false)
+  bids          Bid[]
+  aiInsights    AiInsight[]
+
+  @@map("bidders")
+}
+
+// Bid schema
+model Bid {
+  id             Int         @id @default(autoincrement())
+  tender         Tender      @relation(fields: [tenderId], references: [id])
+  tenderId       Int         @map("tender_id")
+  bidder         Bidder      @relation(fields: [bidderId], references: [id])
+  bidderId       Int         @map("bidder_id")
+  totalAmount    Float       @map("total_amount")
+  submissionDate DateTime?   @default(now()) @map("submission_date")
+  status         String      @default("submitted") // submitted, under review, accepted, rejected
+  notes          String?
+  aiScore        Int?        @map("ai_score")
+  items          BidItem[]
+
+  @@map("bids")
+}
+
+// Bid Items schema
+model BidItem {
+  id                        Int        @id @default(autoincrement())
+  bid                       Bid        @relation(fields: [bidId], references: [id])
+  bidId                     Int        @map("bid_id")
+  tenderItem                TenderItem @relation(fields: [tenderItemId], references: [id])
+  tenderItemId              Int        @map("tender_item_id")
+  category                  Category   @relation(fields: [categoryId], references: [id])
+  categoryId                Int        @map("category_id")
+  unitPrice                 Float      @map("unit_price")
+  totalPrice                Float      @map("total_price")
+  alternativeItem           Boolean    @default(false) @map("alternative_item")
+  alternativeItemName       String?    @map("alternative_item_name")
+  alternativeItemDescription String?   @map("alternative_item_description")
+  alternativeItemSku        String?    @map("alternative_item_sku")
+  deliveryTimeInDays        Int?       @map("delivery_time_days")
+  warrantyPeriodInDays      Int?       @map("warranty_period_days")
+  complianceNotes           String?    @map("compliance_notes")
+
+  @@map("bid_items")
+}
+
+// AI Insight schema
+model AiInsight {
+  id          Int      @id @default(autoincrement())
+  tender      Tender?  @relation(fields: [tenderId], references: [id])
+  tenderId    Int?     @map("tender_id")
+  bidder      Bidder?  @relation(fields: [bidderId], references: [id])
+  bidderId    Int?     @map("bidder_id")
+  type        String
+  title       String
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+  severity    String   @default("info") // info, warning, alert
+  metadata    Json?
+
+  @@map("ai_insights")
+}
