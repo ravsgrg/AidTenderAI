@@ -2,7 +2,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Redirect } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,14 +32,18 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   console.log("AuthPage rendering");
   const [activeTab, setActiveTab] = useState<string>("login");
-  const { user, loginMutation, registerMutation } = useAuth();
-  console.log("Auth user state:", user);
+  const { user, loginMutation, registerMutation, isLoading } = useAuth();
+  console.log("Auth user state:", user, "isLoading:", isLoading);
+  
+  useEffect(() => {
+    console.log("AuthPage useEffect - user:", user, "isLoading:", isLoading);
+  }, [user, isLoading]);
   
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
-      password: "",
+      username: "admin",
+      password: "password",
     },
   });
   
@@ -54,16 +58,19 @@ export default function AuthPage() {
   });
   
   const onLoginSubmit = (data: LoginFormData) => {
+    console.log("Login submit with data:", data);
     loginMutation.mutate(data);
   };
   
   const onRegisterSubmit = (data: RegisterFormData) => {
+    console.log("Register submit with data:", data);
     const { confirmPassword, ...registerData } = data;
     registerMutation.mutate(registerData);
   };
 
-  // Redirect if already logged in
+  // Redirect if already logged in (do this check after hooks)
   if (user) {
+    console.log("User authenticated, redirecting to dashboard");
     return <Redirect to="/" />;
   }
 

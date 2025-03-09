@@ -76,7 +76,7 @@ export interface IStorage {
   getBidderAnalytics(): Promise<any>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Fix type issue with session store
 }
 
 export class MemStorage implements IStorage {
@@ -89,7 +89,7 @@ export class MemStorage implements IStorage {
   private bidItems: Map<number, BidItem>;
   private aiInsights: Map<number, AiInsight>;
   
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Fix type issue with session store
   
   currentUserId: number;
   currentCategoryId: number;
