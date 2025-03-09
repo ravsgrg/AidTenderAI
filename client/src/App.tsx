@@ -12,6 +12,7 @@ import CreateTenderPage from "@/pages/tenders/create";
 import TenderDetailPage from "@/pages/tenders/[id]";
 import BidsPage from "@/pages/bids";
 import BiddersPage from "@/pages/bidders";
+import InventoryManagement from "@/components/inventory/InventoryManagement";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <ProtectedRoute path="/tenders/:id" component={TenderDetailPage} />
       <ProtectedRoute path="/bids" component={BidsPage} />
       <ProtectedRoute path="/bidders" component={BiddersPage} />
+      <ProtectedRoute path="/inventory" component={InventoryManagement} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
