@@ -11,7 +11,8 @@ import {
   insertBidSchema, 
   insertBidItemSchema,
   insertAiInsightSchema,
-  insertInventoryCategorySchema
+  insertInventoryCategorySchema,
+  insertInventoryItemSchema
 } from "@shared/schema";
 
 // Helper for checking authentication

@@ -288,3 +288,479 @@ export default function InventoryManagement() {
     </div>
   );
 }
+import React, { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Package, Edit, Trash2, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+export default function InventoryManagement() {
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    quantity: 0,
+    unit: '',
+    categoryId: 0,
+    location: '',
+    status: 'AVAILABLE'
+  });
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchInventoryItems();
+    fetchInventoryCategories();
+  }, []);
+
+  const fetchInventoryItems = async () => {
+    try {
+      const response = await fetch('/api/inventory-items');
+      if (response.ok) {
+        const data = await response.json();
+        setItems(data);
+      }
+    } catch (error) {
+      console.error('Error fetching inventory items:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchInventoryCategories = async () => {
+    try {
+      const response = await fetch('/api/inventory-categories');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error fetching inventory categories:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'quantity' ? parseInt(value) || 0 : value
+    }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'categoryId' ? parseInt(value) : value
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      quantity: 0,
+      unit: '',
+      categoryId: 0,
+      location: '',
+      status: 'AVAILABLE'
+    });
+  };
+
+  const handleAddItem = async () => {
+    try {
+      const response = await fetch('/api/inventory-items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        await fetchInventoryItems();
+        setIsAddDialogOpen(false);
+        resetForm();
+      }
+    } catch (error) {
+      console.error('Error adding inventory item:', error);
+    }
+  };
+
+  const handleEditItem = async () => {
+    try {
+      const response = await fetch(`/api/inventory-items/${editingItemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        await fetchInventoryItems();
+        setIsEditDialogOpen(false);
+        resetForm();
+      }
+    } catch (error) {
+      console.error('Error updating inventory item:', error);
+    }
+  };
+
+  const handleDeleteItem = async (id) => {
+    if (confirm('Are you sure you want to delete this item?')) {
+      try {
+        const response = await fetch(`/api/inventory-items/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          await fetchInventoryItems();
+        }
+      } catch (error) {
+        console.error('Error deleting inventory item:', error);
+      }
+    }
+  };
+
+  const startEdit = (item) => {
+    setEditingItemId(item.id);
+    setFormData({
+      name: item.name,
+      description: item.description || '',
+      quantity: item.quantity,
+      unit: item.unit,
+      categoryId: item.categoryId,
+      location: item.location || '',
+      status: item.status
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  return (
+    <div className="container mx-auto py-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Inventory Management</h1>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Add Item
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Inventory Items</CardTitle>
+          <CardDescription>
+            Manage your construction materials and equipment
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-6">
+                      No inventory items found. Add your first item to get started.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  items.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell>
+                        {categories.find(cat => cat.id === item.categoryId)?.name || 'Uncategorized'}
+                      </TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                      <TableCell>{item.location || '-'}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          item.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
+                          item.status === 'LOW_STOCK' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {item.status.replace('_', ' ')}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => startEdit(item)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add Item Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Inventory Item</DialogTitle>
+            <DialogDescription>
+              Add a new item to your inventory. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <Select
+                value={formData.categoryId.toString()}
+                onValueChange={(value) => handleSelectChange('categoryId', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quantity" className="text-right">
+                Quantity
+              </Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="number"
+                value={formData.quantity}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="unit" className="text-right">
+                Unit
+              </Label>
+              <Input
+                id="unit"
+                name="unit"
+                value={formData.unit}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">
+                Location
+              </Label>
+              <Input
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="status" className="text-right">
+                Status
+              </Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleSelectChange('status', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AVAILABLE">Available</SelectItem>
+                  <SelectItem value="LOW_STOCK">Low Stock</SelectItem>
+                  <SelectItem value="OUT_OF_STOCK">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" onClick={handleAddItem}>
+              Add Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Item Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Inventory Item</DialogTitle>
+            <DialogDescription>
+              Update the item details. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="edit-name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="edit-description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-category" className="text-right">
+                Category
+              </Label>
+              <Select
+                value={formData.categoryId.toString()}
+                onValueChange={(value) => handleSelectChange('categoryId', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-quantity" className="text-right">
+                Quantity
+              </Label>
+              <Input
+                id="edit-quantity"
+                name="quantity"
+                type="number"
+                value={formData.quantity}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-unit" className="text-right">
+                Unit
+              </Label>
+              <Input
+                id="edit-unit"
+                name="unit"
+                value={formData.unit}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-location" className="text-right">
+                Location
+              </Label>
+              <Input
+                id="edit-location"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-status" className="text-right">
+                Status
+              </Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleSelectChange('status', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AVAILABLE">Available</SelectItem>
+                  <SelectItem value="LOW_STOCK">Low Stock</SelectItem>
+                  <SelectItem value="OUT_OF_STOCK">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" onClick={handleEditItem}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
