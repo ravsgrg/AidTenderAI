@@ -30,8 +30,10 @@ type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
+  console.log("AuthPage rendering");
   const [activeTab, setActiveTab] = useState<string>("login");
   const { user, loginMutation, registerMutation } = useAuth();
+  console.log("Auth user state:", user);
   
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),

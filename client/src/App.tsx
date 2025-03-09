@@ -29,6 +29,7 @@ function Router() {
 }
 
 function App() {
+  console.log("App rendering");
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
