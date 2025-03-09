@@ -113,6 +113,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.categories = new Map();
+    this.inventoryCategories = new Map();
     this.tenders = new Map();
     this.tenderItems = new Map();
     this.bidders = new Map();
@@ -122,6 +123,7 @@ export class MemStorage implements IStorage {
     
     this.currentUserId = 1;
     this.currentCategoryId = 1;
+    this.currentInventoryCategoryId = 1;
     this.currentTenderId = 1;
     this.currentTenderItemId = 1;
     this.currentBidderId = 1;
@@ -388,6 +390,35 @@ export class MemStorage implements IStorage {
     return this.aiInsights.delete(id);
   }
   
+  // Inventory Category methods
+  async getInventoryCategories(): Promise<InventoryCategory[]> {
+    return Array.from(this.inventoryCategories.values());
+  }
+  
+  async getInventoryCategory(id: number): Promise<InventoryCategory | undefined> {
+    return this.inventoryCategories.get(id);
+  }
+  
+  async createInventoryCategory(category: InsertInventoryCategory): Promise<InventoryCategory> {
+    const id = this.currentInventoryCategoryId++;
+    const newCategory: InventoryCategory = { ...category, id };
+    this.inventoryCategories.set(id, newCategory);
+    return newCategory;
+  }
+  
+  async updateInventoryCategory(id: number, category: Partial<InsertInventoryCategory>): Promise<InventoryCategory | undefined> {
+    const existingCategory = this.inventoryCategories.get(id);
+    if (!existingCategory) return undefined;
+    
+    const updatedCategory = { ...existingCategory, ...category };
+    this.inventoryCategories.set(id, updatedCategory);
+    return updatedCategory;
+  }
+  
+  async deleteInventoryCategory(id: number): Promise<boolean> {
+    return this.inventoryCategories.delete(id);
+  }
+  
   // Analytics methods
   async getTenderStats(): Promise<any> {
     const tenders = Array.from(this.tenders.values());
@@ -460,6 +491,20 @@ export class MemStorage implements IStorage {
       this.categories.set(category.id, category);
     });
     this.currentCategoryId = categories.length + 1;
+    
+    // Create inventory categories
+    const inventoryCategories = [
+      { id: 1, name: 'Plumbing Supplies', description: 'Pipes, fittings, and fixtures for water systems', code: 'PLUMB' },
+      { id: 2, name: 'Construction Materials', description: 'Basic building materials like cement, wood, and bricks', code: 'CONSTR' },
+      { id: 3, name: 'Electrical Components', description: 'Wiring, connectors, and electrical equipment', code: 'ELECT' },
+      { id: 4, name: 'HVAC Equipment', description: 'Heating, ventilation, and air conditioning equipment', code: 'HVAC' },
+      { id: 5, name: 'Tools & Hardware', description: 'Hand tools, power tools, and hardware items', code: 'TOOLS' }
+    ];
+    
+    inventoryCategories.forEach(category => {
+      this.inventoryCategories.set(category.id, category);
+    });
+    this.currentInventoryCategoryId = inventoryCategories.length + 1;
     
     // Create bidders
     const bidders = [
@@ -539,17 +584,115 @@ export class MemStorage implements IStorage {
     });
     this.currentTenderId = tenders.length + 1;
     
-    // Create tender items
+    // Create tender items with inventory categories
     const tenderItems = [
-      { id: 1, tenderId: 1, name: 'PVC Pipes 2"', description: '2 inch PVC pipes', quantity: 50, unit: 'meters', estimatedPrice: 5.5 },
-      { id: 2, tenderId: 1, name: 'PVC Elbow Joints', description: '2 inch PVC elbow joints', quantity: 20, unit: 'pcs', estimatedPrice: 1.2 },
-      { id: 3, tenderId: 1, name: 'Water Taps', description: 'Stainless steel water taps', quantity: 10, unit: 'pcs', estimatedPrice: 15 },
+      { 
+        id: 1, 
+        tenderId: 1, 
+        categoryId: 1, // Plumbing Supplies
+        name: 'PVC Pipes 2"', 
+        description: '2 inch PVC pipes', 
+        quantity: 50, 
+        unit: 'meters', 
+        estimatedPrice: 5.5,
+        sku: 'PVC-200',
+        minQuantity: 10,
+        currentStock: 75,
+        location: 'Warehouse A',
+        lastUpdated: new Date()
+      },
+      {
+        id: 2, 
+        tenderId: 1,
+        categoryId: 1, // Plumbing Supplies
+        name: 'PVC Elbow Joints', 
+        description: '2 inch PVC elbow joints', 
+        quantity: 20, 
+        unit: 'pcs', 
+        estimatedPrice: 1.2,
+        sku: 'PVC-ELB',
+        minQuantity: 5,
+        currentStock: 30,
+        location: 'Warehouse A',
+        lastUpdated: new Date()
+      },
+      { 
+        id: 3, 
+        tenderId: 1,
+        categoryId: 1, // Plumbing Supplies
+        name: 'Water Taps', 
+        description: 'Stainless steel water taps', 
+        quantity: 10, 
+        unit: 'pcs', 
+        estimatedPrice: 15,
+        sku: 'TAP-SS',
+        minQuantity: 3,
+        currentStock: 15,
+        location: 'Warehouse B',
+        lastUpdated: new Date()
+      },
       
-      { id: 4, tenderId: 2, name: 'Door Hinges', description: 'Metal door hinges', quantity: 30, unit: 'pairs', estimatedPrice: 3 },
-      { id: 5, tenderId: 2, name: 'Door Handles', description: 'Metal door handles', quantity: 15, unit: 'pcs', estimatedPrice: 8 },
+      { 
+        id: 4, 
+        tenderId: 2,
+        categoryId: 5, // Tools & Hardware
+        name: 'Door Hinges', 
+        description: 'Metal door hinges', 
+        quantity: 30, 
+        unit: 'pairs', 
+        estimatedPrice: 3,
+        sku: 'HINGE-M',
+        minQuantity: 10,
+        currentStock: 45,
+        location: 'Warehouse B',
+        lastUpdated: new Date()
+      },
+      { 
+        id: 5, 
+        tenderId: 2,
+        categoryId: 5, // Tools & Hardware
+        name: 'Door Handles', 
+        description: 'Metal door handles', 
+        quantity: 15, 
+        unit: 'pcs', 
+        estimatedPrice: 8,
+        sku: 'HANDLE-M',
+        minQuantity: 5,
+        currentStock: 20,
+        location: 'Warehouse B',
+        lastUpdated: new Date()
+      },
       
-      { id: 6, tenderId: 3, name: 'Hospital Beds', description: 'Standard hospital beds', quantity: 5, unit: 'pcs', estimatedPrice: 500 },
-      { id: 7, tenderId: 3, name: 'Examination Tables', description: 'Medical examination tables', quantity: 3, unit: 'pcs', estimatedPrice: 300 }
+      { 
+        id: 6, 
+        tenderId: 3,
+        categoryId: 4, // HVAC Equipment
+        name: 'Hospital Beds', 
+        description: 'Standard hospital beds', 
+        quantity: 5, 
+        unit: 'pcs', 
+        estimatedPrice: 500,
+        sku: 'BED-MED',
+        minQuantity: 2,
+        currentStock: 8,
+        location: 'Warehouse C',
+        lastUpdated: new Date()
+      },
+      { 
+        id: 7, 
+        tenderId: 3,
+        categoryId: 4, // HVAC Equipment
+        name: 'Examination Tables', 
+        description: 'Medical examination tables', 
+        quantity: 3, 
+        unit: 'pcs', 
+        estimatedPrice: 300,
+        sku: 'TABLE-MED',
+        minQuantity: 1,
+        currentStock: 5,
+        location: 'Warehouse C',
+        lastUpdated: new Date()
+      }
     ];
     
     tenderItems.forEach(item => {
@@ -616,24 +759,192 @@ export class MemStorage implements IStorage {
     });
     this.currentBidId = bids.length + 1;
     
-    // Create bid items
+    // Create bid items with categories
     const bidItems = [
-      { id: 1, bidId: 1, tenderItemId: 1, unitPrice: 5, totalPrice: 250 },
-      { id: 2, bidId: 1, tenderItemId: 2, unitPrice: 1, totalPrice: 20 },
-      { id: 3, bidId: 1, tenderItemId: 3, unitPrice: 8, totalPrice: 80 },
+      { 
+        id: 1, 
+        bidId: 1, 
+        tenderItemId: 1, 
+        categoryId: 1,  // Plumbing Supplies
+        unitPrice: 5, 
+        totalPrice: 250,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 7,
+        warrantyPeriodInDays: 365,
+        complianceNotes: 'Meets specification requirements'
+      },
+      { 
+        id: 2, 
+        bidId: 1, 
+        tenderItemId: 2, 
+        categoryId: 1,  // Plumbing Supplies
+        unitPrice: 1, 
+        totalPrice: 20,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 5,
+        warrantyPeriodInDays: 365,
+        complianceNotes: 'Standard quality PVC joints'
+      },
+      { 
+        id: 3, 
+        bidId: 1, 
+        tenderItemId: 3, 
+        categoryId: 1,  // Plumbing Supplies
+        unitPrice: 8, 
+        totalPrice: 80,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 10,
+        warrantyPeriodInDays: 730,
+        complianceNotes: 'Heavy-duty stainless steel'
+      },
       
-      { id: 4, bidId: 2, tenderItemId: 1, unitPrice: 5.5, totalPrice: 275 },
-      { id: 5, bidId: 2, tenderItemId: 2, unitPrice: 1.1, totalPrice: 22 },
-      { id: 6, bidId: 2, tenderItemId: 3, unitPrice: 8.3, totalPrice: 83 },
+      { 
+        id: 4, 
+        bidId: 2, 
+        tenderItemId: 1, 
+        categoryId: 1,  // Plumbing Supplies
+        unitPrice: 5.5, 
+        totalPrice: 275,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 5,
+        warrantyPeriodInDays: 365,
+        complianceNotes: 'Premium quality pipes'
+      },
+      { 
+        id: 5, 
+        bidId: 2, 
+        tenderItemId: 2, 
+        categoryId: 1,  // Plumbing Supplies
+        unitPrice: 1.1, 
+        totalPrice: 22,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 5,
+        warrantyPeriodInDays: 365,
+        complianceNotes: 'Premium quality joints'
+      },
+      { 
+        id: 6, 
+        bidId: 2, 
+        tenderItemId: 3, 
+        categoryId: 1,  // Plumbing Supplies
+        unitPrice: 8.3, 
+        totalPrice: 83,
+        alternativeItem: true,
+        alternativeItemName: 'Premium Chrome Taps',
+        alternativeItemDescription: 'Higher quality chrome finish taps',
+        alternativeItemSku: 'TAP-PREM',
+        deliveryTimeInDays: 7,
+        warrantyPeriodInDays: 1095,
+        complianceNotes: 'Upgraded alternative with better warranty'
+      },
       
-      { id: 7, bidId: 3, tenderItemId: 4, unitPrice: 3, totalPrice: 90 },
-      { id: 8, bidId: 3, tenderItemId: 5, unitPrice: 6.7, totalPrice: 100 },
+      { 
+        id: 7, 
+        bidId: 3, 
+        tenderItemId: 4, 
+        categoryId: 5,  // Tools & Hardware 
+        unitPrice: 3, 
+        totalPrice: 90,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 3,
+        warrantyPeriodInDays: 365,
+        complianceNotes: 'Standard steel hinges'
+      },
+      { 
+        id: 8, 
+        bidId: 3, 
+        tenderItemId: 5, 
+        categoryId: 5,  // Tools & Hardware
+        unitPrice: 6.7, 
+        totalPrice: 100,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 3,
+        warrantyPeriodInDays: 365,
+        complianceNotes: 'Standard finish handles'
+      },
       
-      { id: 9, bidId: 4, tenderItemId: 4, unitPrice: 3.5, totalPrice: 105 },
-      { id: 10, bidId: 4, tenderItemId: 5, unitPrice: 6.3, totalPrice: 95 },
+      { 
+        id: 9, 
+        bidId: 4, 
+        tenderItemId: 4, 
+        categoryId: 5,  // Tools & Hardware
+        unitPrice: 3.5, 
+        totalPrice: 105,
+        alternativeItem: true,
+        alternativeItemName: 'Brass Door Hinges',
+        alternativeItemDescription: 'Brass finish door hinges for better appearance',
+        alternativeItemSku: 'HINGE-BRASS',
+        deliveryTimeInDays: 5,
+        warrantyPeriodInDays: 730,
+        complianceNotes: 'Higher quality alternative with better warranty'
+      },
+      { 
+        id: 10, 
+        bidId: 4, 
+        tenderItemId: 5, 
+        categoryId: 5,  // Tools & Hardware
+        unitPrice: 6.3, 
+        totalPrice: 95,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 4,
+        warrantyPeriodInDays: 365,
+        complianceNotes: 'Wholesale discount applied'
+      },
       
-      { id: 11, bidId: 5, tenderItemId: 6, unitPrice: 450, totalPrice: 2250 },
-      { id: 12, bidId: 5, tenderItemId: 7, unitPrice: 320, totalPrice: 960 }
+      { 
+        id: 11, 
+        bidId: 5, 
+        tenderItemId: 6, 
+        categoryId: 4,  // HVAC Equipment
+        unitPrice: 450, 
+        totalPrice: 2250,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 14,
+        warrantyPeriodInDays: 1095,
+        complianceNotes: 'Meets medical standards'
+      },
+      { 
+        id: 12, 
+        bidId: 5, 
+        tenderItemId: 7, 
+        categoryId: 4,  // HVAC Equipment
+        unitPrice: 320, 
+        totalPrice: 960,
+        alternativeItem: false,
+        alternativeItemName: null,
+        alternativeItemDescription: null,
+        alternativeItemSku: null,
+        deliveryTimeInDays: 14,
+        warrantyPeriodInDays: 1095,
+        complianceNotes: 'Meets medical standards'
+      }
     ];
     
     bidItems.forEach(item => {
