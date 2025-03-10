@@ -9,7 +9,8 @@ import {
   Bot,
   Brain,
   Lightbulb,
-  Package
+  Package,
+  FolderTree
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export function Sidebar({ className }: SidebarProps) {
     { path: '/bids', label: 'Bid Analysis', icon: <BarChart className="mr-3 h-5 w-5" /> },
     { path: '/bidders', label: 'Bidders', icon: <Building className="mr-3 h-5 w-5" /> },
     { path: '/inventory', label: 'Inventory', icon: <Package className="mr-3 h-5 w-5" /> },
+    { path: '/categories', label: 'Categories', icon: <FolderTree className="mr-3 h-5 w-5" /> },
     { path: '/contracts', label: 'Contracts', icon: <FileText className="mr-3 h-5 w-5" /> },
     { path: '/settings', label: 'Settings', icon: <Settings className="mr-3 h-5 w-5" /> },
   ];
