@@ -1,11 +1,10 @@
-
 import PageLayout from "@/components/layout/page-layout";
 import CategoryManagement from "@/components/inventory/CategoryManagement";
 import { useTitle } from "@/hooks/use-title";
 
 export default function CategoriesPage() {
   useTitle("Categories");
-  
+
   return (
     <PageLayout>
       <div className="container mx-auto py-6">
@@ -22,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import PageLayout from '@/components/layout/page-layout';
 import { Loader2, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
@@ -50,7 +48,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<Partial<Category> | null>(null);
-  
+
   // Fetch categories
   useEffect(() => {
     fetchCategories();
@@ -78,25 +76,25 @@ export default function CategoriesPage() {
   // Add or update category
   const saveCategory = async () => {
     if (!currentCategory?.name) return;
-    
+
     try {
       const isUpdating = currentCategory.id !== undefined;
       const url = isUpdating ? `/api/categories/${currentCategory.id}` : '/api/categories';
       const method = isUpdating ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(currentCategory),
       });
-      
+
       if (!response.ok) throw new Error(`Failed to ${isUpdating ? 'update' : 'create'} category`);
-      
+
       toast({
         title: "Success",
         description: `Category ${isUpdating ? 'updated' : 'created'} successfully`,
       });
-      
+
       setIsDialogOpen(false);
       fetchCategories();
     } catch (error) {
@@ -112,19 +110,19 @@ export default function CategoriesPage() {
   // Delete category
   const deleteCategory = async (id: number) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
-    
+
     try {
       const response = await fetch(`/api/categories/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) throw new Error('Failed to delete category');
-      
+
       toast({
         title: "Success",
         description: "Category deleted successfully",
       });
-      
+
       fetchCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
