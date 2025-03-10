@@ -1,31 +1,26 @@
-import { Link, useLocation } from "wouter";
+
+import React from 'react';
+import { Link, useRoute } from 'wouter';
 import { 
   LayoutDashboard, 
   ListTodo, 
   BarChart, 
   Building, 
+  Package, 
+  Tags, 
   FileText, 
   Settings,
   Bot,
   Brain,
-  Lightbulb,
-  Package,
-  FolderTree,
-  Tags
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+  Lightbulb
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   className?: string;
 }
 
 export function Sidebar({ className }: SidebarProps) {
-  const [location] = useLocation();
-
-  const isRouteActive = (path: string) => {
-    return location === path || (path !== '/' && location.startsWith(path));
-  };
-
   const sidebarItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard className="mr-3 h-5 w-5" /> },
     { path: '/tenders', label: 'Tenders', icon: <ListTodo className="mr-3 h-5 w-5" /> },
@@ -54,37 +49,54 @@ export function Sidebar({ className }: SidebarProps) {
 
       <nav className="mt-5 flex-1">
         <ul>
-          {sidebarItems.map((item) => (
-            <li key={item.path}>
-              <Link href={item.path}>
-                <a className={cn(
+          {sidebarItems.map((item) => {
+            const [isActive] = useRoute(item.path === "/" ? item.path : `${item.path}*`);
+            return (
+              <li key={item.path}>
+                <Link href={item.path} className={cn(
                   "px-4 py-3 flex items-center hover:bg-gray-800 cursor-pointer",
-                  isRouteActive(item.path) && "bg-primary-700 hover:bg-primary-600"
+                  isActive && "bg-primary-700 hover:bg-primary-600"
                 )}>
                   {item.icon}
                   <span>{item.label}</span>
-                </a>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <div className="px-4 mt-10">
-          <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">AI Insights</h2>
-          <ul>
-            {aiItems.map((item) => (
-              <li key={item.path}>
-                <Link href={item.path}>
-                  <a className="px-2 py-2 flex items-center text-sm hover:bg-gray-800 rounded cursor-pointer">
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </a>
                 </Link>
               </li>
-            ))}
+            );
+          })}
+        </ul>
+
+        <div className="mt-6 px-4">
+          <h2 className="text-xs uppercase text-gray-500 font-semibold mb-2">AI Tools</h2>
+          <ul>
+            {aiItems.map((item) => {
+              const [isActive] = useRoute(item.path === "/" ? item.path : `${item.path}*`);
+              return (
+                <li key={item.path}>
+                  <Link href={item.path} className={cn(
+                    "px-4 py-2 flex items-center text-sm hover:bg-gray-800 rounded-md",
+                    isActive && "bg-gray-800"
+                  )}>
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </nav>
+
+      <div className="p-4 border-t border-gray-800">
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-full bg-primary-700 flex items-center justify-center">
+            <span className="text-sm font-semibold">AU</span>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm font-medium">Admin User</p>
+            <p className="text-xs text-gray-400">admin@tenderai.com</p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

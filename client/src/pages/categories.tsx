@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,15 +82,15 @@ export default function CategoryManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setError(null);
       const url = editingCategory 
         ? `/api/inventory-categories/${editingCategory.id}` 
         : '/api/inventory-categories';
-      
+
       const method = editingCategory ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -115,7 +114,7 @@ export default function CategoryManagement() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
-    
+
     try {
       setError(null);
       const response = await fetch(`/api/inventory-categories/${id}`, {
@@ -202,7 +201,7 @@ export default function CategoryManagement() {
                 : 'Fill in the details for the new category.'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -215,7 +214,7 @@ export default function CategoryManagement() {
                   required 
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="code">Code</Label>
                 <Input 
@@ -226,7 +225,7 @@ export default function CategoryManagement() {
                   placeholder="Optional"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea 
@@ -238,7 +237,7 @@ export default function CategoryManagement() {
                 />
               </div>
             </div>
-            
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleCloseDialog}>
                 Cancel
