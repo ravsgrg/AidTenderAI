@@ -59,48 +59,42 @@ export class PrismaStorage implements IStorage {
   }
 
   // Category methods
-  async getCategories(): Promise<Category[]> {
-    const categories = await this.prisma.category.findMany();
-    return categories as Category[];
+  async getCategories(): Promise<s.Category[]> {
+    return this.prisma.category.findMany();
   }
 
-  async getCategory(id: number): Promise<Category | undefined> {
-    const category = await this.prisma.category.findUnique({
-      where: { id }
+  async getCategoryById(id: number): Promise<s.Category | null> {
+    return this.prisma.category.findUnique({
+      where: { id },
     });
-    return category as Category;
   }
 
-  async createCategory(category: InsertCategory): Promise<Category> {
-    const newCategory = await this.prisma.category.create({
-      data: {
-        name: category.name,
-        description: category.description || null,
-      }
+  async createCategory(data: Omit<s.Category, "id">): Promise<s.Category> {
+    return this.prisma.category.create({
+      data,
     });
-    return newCategory as Category;
   }
 
-  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined> {
+  async updateCategory(id: number, data: Partial<Omit<s.Category, "id">>): Promise<s.Category | null> {
     try {
-      const updatedCategory = await this.prisma.category.update({
+      return await this.prisma.category.update({
         where: { id },
-        data: category
+        data,
       });
-      return updatedCategory as Category;
-    } catch (err) {
-      // Record not found
-      return undefined;
+    } catch (error) {
+      console.error("Error updating category:", error);
+      return null;
     }
   }
 
   async deleteCategory(id: number): Promise<boolean> {
     try {
       await this.prisma.category.delete({
-        where: { id }
+        where: { id },
       });
       return true;
-    } catch (err) {
+    } catch (error) {
+      console.error("Error deleting category:", error);
       return false;
     }
   }
@@ -151,7 +145,7 @@ export class PrismaStorage implements IStorage {
       return false;
     }
   }
-  
+
   // Inventory Item methods
   async getInventoryItems(): Promise<InventoryItem[]> {
     const items = await this.prisma.inventoryItem.findMany();
@@ -198,10 +192,11 @@ export class PrismaStorage implements IStorage {
   async deleteInventoryItem(id: number): Promise<boolean> {
     try {
       await this.prisma.inventoryItem.delete({
-        where: { id }
+        where: { id },
       });
       return true;
-    } catch (err) {
+    } catch (error) {
+      console.error("Error deleting inventory item:", error);
       return false;
     }
   }
@@ -552,7 +547,7 @@ export class PrismaStorage implements IStorage {
         }
       }
     });
-    
+
     const closedTenders = await this.prisma.tender.count({
       where: {
         status: {
@@ -560,7 +555,7 @@ export class PrismaStorage implements IStorage {
         }
       }
     });
-    
+
     const totalBudget = await this.prisma.tender.aggregate({
       _sum: {
         budget: true
@@ -569,7 +564,7 @@ export class PrismaStorage implements IStorage {
         status: 'open'
       }
     });
-    
+
     const averageBidsPerTender = await this.prisma.bid.groupBy({
       by: ['tenderId'],
       _count: {
@@ -580,7 +575,7 @@ export class PrismaStorage implements IStorage {
       const total = groups.reduce((acc, curr) => acc + curr._count._all, 0);
       return total / groups.length;
     });
-    
+
     return {
       activeTenders,
       closedTenders,
@@ -591,13 +586,13 @@ export class PrismaStorage implements IStorage {
 
   async getBidderAnalytics(): Promise<any> {
     const totalBidders = await this.prisma.bidder.count();
-    
+
     const qualifiedBidders = await this.prisma.bidder.count({
       where: {
         verified: true
       }
     });
-    
+
     const topBidders = await this.prisma.bidder.findMany({
       take: 5,
       orderBy: {
@@ -614,7 +609,7 @@ export class PrismaStorage implements IStorage {
         rating: true
       }
     });
-    
+
     const bidsByCategory = await this.prisma.category.findMany({
       select: {
         id: true,
@@ -626,7 +621,7 @@ export class PrismaStorage implements IStorage {
         }
       }
     });
-    
+
     return {
       totalBidders,
       qualifiedBidders,

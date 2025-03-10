@@ -247,3 +247,22 @@ export type InsertBidItem = z.infer<typeof insertBidItemSchema>;
 
 export type AiInsight = typeof aiInsights.$inferSelect;
 export type InsertAiInsight = z.infer<typeof insertAiInsightSchema>;
+
+export interface Category {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface InventoryItem {
+  id: number;
+  name: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  categoryId?: number;
+  price: number;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
+}
