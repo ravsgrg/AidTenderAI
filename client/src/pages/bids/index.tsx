@@ -59,9 +59,9 @@ export default function BidsPage() {
   
   // Filter bids based on selected filters and search query
   const filteredBids = bids?.filter(bid => {
-    const matchesStatus = !statusFilter || bid.status === statusFilter;
-    const matchesTender = !tenderFilter || bid.tenderId.toString() === tenderFilter;
-    const matchesBidder = !bidderFilter || bid.bidderId.toString() === bidderFilter;
+    const matchesStatus = statusFilter === 'all' || !statusFilter || bid.status === statusFilter;
+    const matchesTender = tenderFilter === 'all' || !tenderFilter || bid.tenderId.toString() === tenderFilter;
+    const matchesBidder = bidderFilter === 'all' || !bidderFilter || bid.bidderId.toString() === bidderFilter;
     
     // Check if bid matches search query (bidder name or tender title)
     let matchesSearch = true;
@@ -261,7 +261,7 @@ export default function BidsPage() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="submitted">Submitted</SelectItem>
                 <SelectItem value="under review">Under Review</SelectItem>
                 <SelectItem value="accepted">Accepted</SelectItem>
@@ -274,7 +274,7 @@ export default function BidsPage() {
                 <SelectValue placeholder="Filter by tender" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Tenders</SelectItem>
+                <SelectItem value="all">All Tenders</SelectItem>
                 {tenders?.map((tender) => (
                   <SelectItem key={tender.id} value={tender.id.toString()}>
                     {tender.title}
@@ -288,7 +288,7 @@ export default function BidsPage() {
                 <SelectValue placeholder="Filter by bidder" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Bidders</SelectItem>
+                <SelectItem value="all">All Bidders</SelectItem>
                 {bidders?.map((bidder) => (
                   <SelectItem key={bidder.id} value={bidder.id.toString()}>
                     {bidder.name}
