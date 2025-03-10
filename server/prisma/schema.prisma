@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          Int            @id @default(autoincrement())
+  name        String
+  description String?
+  code        String?        @unique
+  cat_type    String         // "EQUIPMENT", "MATERIALS", "SERVICES"
+  parent_id   Int?          // For subcategories
+  parent      Category?     @relation("SubCategories", fields: [parent_id], references: [id])
+  children    Category[]    @relation("SubCategories")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  items       InventoryItem[]
+  tenderItems TenderItem[]   // Used for both inventory and tender items
+
+  @@map("categories")
+}
+
+model InventoryItem {
+  id          Int          @id @default(autoincrement())
+  item_no     String       @unique
+  desc        String
+  unit        String
+  unit_cost   Float
+  unit_weight Float
+  qty         Int
+  categoryId  Int
+  category    Category     @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("inventory_items")
+}
+
+model Tender {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String
+  status      String      // "DRAFT", "PUBLISHED", "CLOSED", "AWARDED"
+  startDate   DateTime
+  endDate     DateTime
+  createdBy   Int
+  user        User        @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       TenderItem[]
+  bids        Bid[]
+
+  @@map("tenders")
+}
+
+model TenderItem {
+  id             Int           @id @default(autoincrement())
+  tenderId       Int
+  tender         Tender        @relation(fields: [tenderId], references: [id])
+  categoryId     Int          // References the same categories as inventory items
+  category       Category      @relation(fields: [categoryId], references: [id])
+  quantity       Int
+  specifications String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  bidItems       BidItem[]
+
+  @@map("tender_items")
+}
+
+model Bid {
+  id          Int       @id @default(autoincrement())
+  tenderId    Int
+  tender      Tender    @relation(fields: [tenderId], references: [id])
+  bidderId    Int
+  bidder      Bidder    @relation(fields: [bidderId], references: [id])
+  status      String    // "DRAFT", "SUBMITTED", "ACCEPTED", "REJECTED"
+  totalAmount Float
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  items       BidItem[]
+
+  @@map("bids")
+}
+
+model BidItem {
+  id            Int           @id @default(autoincrement())
+  bidId         Int
+  bid           Bid          @relation(fields: [bidId], references: [id])
+  tenderItemId  Int
+  tenderItem    TenderItem   @relation(fields: [tenderItemId], references: [id])
+  unitPrice     Float
+  quantity      Int
+  totalPrice    Float
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("bid_items")
+}
+
+model Bidder {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  phone         String?
+  address       String?
+  contactPerson String
+  status        String    // "ACTIVE", "INACTIVE", "SUSPENDED"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bids          Bid[]
+
+  @@map("bidders")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  role      String    // "ADMIN", "USER"
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  tenders   Tender[]
+
+  @@map("users")
+} 

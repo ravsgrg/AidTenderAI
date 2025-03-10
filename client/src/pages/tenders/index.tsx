@@ -53,8 +53,8 @@ export default function TendersPage() {
   });
 
   const filteredTenders = tenders?.filter(tender => {
-    const matchesStatus = !statusFilter || tender.status === statusFilter;
-    const matchesCategory = !categoryFilter || tender.categoryId.toString() === categoryFilter;
+    const matchesStatus = statusFilter === "all" || !statusFilter || tender.status === statusFilter;
+    const matchesCategory = categoryFilter === "all" || !categoryFilter || tender.categoryId.toString() === categoryFilter;
     const matchesSearch = !searchQuery || 
       tender.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tender.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -231,7 +231,7 @@ export default function TendersPage() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="under review">Under Review</SelectItem>
@@ -245,7 +245,7 @@ export default function TendersPage() {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}

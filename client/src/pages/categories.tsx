@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PageLayout } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,7 @@ interface Category {
   code?: string;
 }
 
-export default function CategoryManagement() {
+export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,121 +135,123 @@ export default function CategoryManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold tracking-tight">Category Management</h2>
-        <Button onClick={() => handleOpenDialog()}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Category
-        </Button>
-      </div>
+    <PageLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold tracking-tight">Category Management</h2>
+          <Button onClick={() => handleOpenDialog()}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Category
+          </Button>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Inventory Categories</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <div className="text-center py-4 text-red-500">{error}</div>
-          )}
-          {isLoading ? (
-            <div className="text-center py-4">Loading categories...</div>
-          ) : categories.length === 0 ? (
-            <div className="text-center py-4">No categories found.</div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
-                      <TableCell>{category.code || '-'}</TableCell>
-                      <TableCell>{category.description || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="icon" onClick={() => handleOpenDialog(category)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="icon" className="text-red-500" onClick={() => handleDelete(category.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+        <Card>
+          <CardHeader>
+            <CardTitle>Inventory Categories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <div className="text-center py-4 text-red-500">{error}</div>
+            )}
+            {isLoading ? (
+              <div className="text-center py-4">Loading categories...</div>
+            ) : categories.length === 0 ? (
+              <div className="text-center py-4">No categories found.</div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {categories.map((category) => (
+                      <TableRow key={category.id}>
+                        <TableCell className="font-medium">{category.name}</TableCell>
+                        <TableCell>{category.code || '-'}</TableCell>
+                        <TableCell>{category.description || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="icon" onClick={() => handleOpenDialog(category)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="text-red-500" onClick={() => handleDelete(category.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
-            <DialogDescription>
-              {editingCategory 
-                ? 'Update the category details below.' 
-                : 'Fill in the details for the new category.'}
-            </DialogDescription>
-          </DialogHeader>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+              <DialogDescription>
+                {editingCategory 
+                  ? 'Update the category details below.' 
+                  : 'Fill in the details for the new category.'}
+              </DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input 
-                  id="name" 
-                  name="name"
-                  value={formData.name} 
-                  onChange={handleInputChange} 
-                  required 
-                />
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input 
+                    id="name" 
+                    name="name"
+                    value={formData.name} 
+                    onChange={handleInputChange} 
+                    required 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="code">Code</Label>
+                  <Input 
+                    id="code" 
+                    name="code"
+                    value={formData.code} 
+                    onChange={handleInputChange} 
+                    placeholder="Optional"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea 
+                    id="description" 
+                    name="description"
+                    value={formData.description} 
+                    onChange={handleInputChange} 
+                    placeholder="Optional"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="code">Code</Label>
-                <Input 
-                  id="code" 
-                  name="code"
-                  value={formData.code} 
-                  onChange={handleInputChange} 
-                  placeholder="Optional"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  name="description"
-                  value={formData.description} 
-                  onChange={handleInputChange} 
-                  placeholder="Optional"
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {editingCategory ? 'Update' : 'Create'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingCategory ? 'Update' : 'Create'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageLayout>
   );
 }

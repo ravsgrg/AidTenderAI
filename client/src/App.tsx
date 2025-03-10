@@ -7,25 +7,19 @@ import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import { ProtectedRoute } from "./lib/protected-route";
-import TendersPage from "@/pages/tenders";
-import CreateTenderPage from "@/pages/tenders/create";
-import TenderDetailPage from "@/pages/tenders/[id]";
-import BidsPage from "@/pages/bids";
-import BiddersPage from "@/pages/bidders";
 import InventoryManagement from "@/components/inventory/InventoryManagement";
 import CategoriesPage from "@/pages/categories";
+import TenderManagement from "./components/tender/TenderManagement";
+import BidManagement from "./components/bidding/BidManagement";
 
 function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/tenders" component={TendersPage} />
-      <ProtectedRoute path="/tenders/create" component={CreateTenderPage} />
-      <ProtectedRoute path="/tenders/:id" component={TenderDetailPage} />
-      <ProtectedRoute path="/bids" component={BidsPage} />
-      <ProtectedRoute path="/bidders" component={BiddersPage} />
       <ProtectedRoute path="/inventory" component={InventoryManagement} />
       <ProtectedRoute path="/categories" component={CategoriesPage} />
+      <ProtectedRoute path="/tenders" component={TenderManagement} />
+      <ProtectedRoute path="/bids" component={BidManagement} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
