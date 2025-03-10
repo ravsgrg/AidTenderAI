@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PageLayout } from "@/components/layout/page-layout";
 import CategoryManagement from "@/components/inventory/CategoryManagement";
