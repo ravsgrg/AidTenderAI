@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,89 +7,76 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Package } from "lucide-react";
+import { Package, PlusCircle, Search, Filter, RefreshCcw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CategoryManagement from "./CategoryManagement";
 
 interface InventoryItem {
   id: number;
   name: string;
-  description: string;
-  quantity: number;
-  unit: string;
+  description: string | null;
   categoryId: number;
-  location: string;
-  status: 'AVAILABLE' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+  sku: string;
+  quantity: number;
+  minQuantity: number;
+  location: string | null;
+  lastUpdated: string;
 }
 
 interface Category {
   id: number;
   name: string;
-  description: string;
+  description: string | null;
+  code?: string;
 }
 
 export default function InventoryManagement() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    description: '',
-    quantity: 0,
-    unit: '',
-    categoryId: 0,
-    location: '',
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    // Fetch items and categories
     fetchInventoryItems();
     fetchCategories();
   }, []);
 
   const fetchInventoryItems = async () => {
     try {
-      const response = await fetch('/api/inventory/items');
-      const data = await response.json();
-      setItems(data);
+      setIsLoading(true);
+      const response = await fetch('/api/inventory-items');
+      if (response.ok) {
+        const data = await response.json();
+        setItems(data);
+      } else {
+        console.error('Failed to fetch inventory items:', response.statusText);
+      }
     } catch (error) {
       console.error('Error fetching inventory items:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/inventory/categories');
-      const data = await response.json();
-      setCategories(data);
+      const response = await fetch('/api/inventory-categories');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      } else {
+        console.error('Failed to fetch inventory categories:', response.statusText);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
 
-  const handleAddItem = async () => {
-    try {
-      const response = await fetch('/api/inventory/items', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newItem),
-      });
-
-      if (response.ok) {
-        // Refresh the list
-        fetchInventoryItems();
-        // Reset the form
-        setNewItem({
-          name: '',
-          description: '',
-          quantity: 0,
-          unit: '',
-          categoryId: 0,
-          location: '',
-        });
-      }
-    } catch (error) {
-      console.error('Error adding inventory item:', error);
-    }
+  const getItemStatus = (item: InventoryItem) => {
+    if (item.quantity <= 0) return 'OUT_OF_STOCK';
+    if (item.quantity <= item.minQuantity) return 'LOW_STOCK';
+    return 'AVAILABLE';
   };
 
   const getStatusBadge = (status: string) => {
@@ -104,128 +92,127 @@ export default function InventoryManagement() {
     }
   };
 
+  const filteredItems = items.filter(item => {
+    const matchesCategory = selectedCategoryId ? item.categoryId === parseInt(selectedCategoryId) : true;
+    const matchesSearch = searchQuery 
+      ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (item.description?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        item.sku.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesCategory && matchesSearch;
+  });
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategoryId(value);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedCategoryId("");
+    setSearchQuery("");
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6 flex items-center">
-        <Package className="mr-2 h-6 w-6" />
-        Inventory Management
-      </h1>
+    <div className="space-y-6">
+      <Tabs defaultValue="inventory">
+        <TabsList>
+          <TabsTrigger value="inventory">Inventory Items</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="inventory" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold tracking-tight">Inventory Management</h2>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Item
+            </Button>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Inventory Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.length > 0 ? (
-                  items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell>{item.location}</TableCell>
-                      <TableCell>{getStatusBadge(item.status)}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">No items found</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Item</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleAddItem(); }}>
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={newItem.name}
-                  onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                  required
-                />
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row gap-4 justify-between">
+                <CardTitle>Inventory Items</CardTitle>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search items..."
+                      className="md:w-[200px]"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <Select value={selectedCategoryId} onValueChange={handleCategoryChange}>
+                      <SelectTrigger className="md:w-[200px]">
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">All Categories</SelectItem>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button variant="outline" size="icon" onClick={handleClearFilters} title="Clear filters">
+                    <RefreshCcw className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={newItem.description}
-                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  value={newItem.quantity}
-                  onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="unit">Unit</Label>
-                <Input
-                  id="unit"
-                  value={newItem.unit}
-                  onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  onValueChange={(value) => setNewItem({ ...newItem, categoryId: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={newItem.location}
-                  onChange={(e) => setNewItem({ ...newItem, location: e.target.value })}
-                />
-              </div>
-
-              <Button type="submit" className="w-full">Add Item</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-4">Loading inventory items...</div>
+              ) : filteredItems.length === 0 ? (
+                <div className="text-center py-4">No inventory items found.</div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>SKU</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredItems.map((item) => {
+                        const status = getItemStatus(item);
+                        const category = categories.find(c => c.id === item.categoryId);
+                        return (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-mono">{item.sku}</TableCell>
+                            <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell>{category?.name || '-'}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>{item.location || '-'}</TableCell>
+                            <TableCell>{getStatusBadge(status)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="categories">
+          <CategoryManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
