@@ -7,8 +7,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Package, PlusCircle, Search, Filter, RefreshCcw } from "lucide-react";
+import { 
+  Package, 
+  PlusCircle, 
+  Search, 
+  Filter, 
+  RefreshCcw, 
+  X 
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
 import CategoryManagement from "./CategoryManagement";
 
 interface InventoryItem {
@@ -34,9 +51,20 @@ export default function InventoryManagement() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newItem, setNewItem] = useState<Partial<InventoryItem>>({
+    name: '',
+    description: '',
+    categoryId: 0,
+    sku: '',
+    quantity: 0,
+    minQuantity: 0,
+    location: '',
+  });
 
   useEffect(() => {
     fetchInventoryItems();
@@ -126,6 +154,81 @@ export default function InventoryManagement() {
     fetchInventoryItems();
     fetchCategories();
   };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewItem(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewItem(prev => ({
+      ...prev,
+      [name]: parseInt(value) || 0
+    }));
+  };
+  
+  const handleCategorySelect = (value: string) => {
+    setNewItem(prev => ({
+      ...prev,
+      categoryId: parseInt(value)
+    }));
+  };
+  
+  const handleAddItem = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      // Validate required fields
+      if (!newItem.name || !newItem.sku || !newItem.categoryId) {
+        setError("Name, SKU and Category are required fields");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const response = await fetch('/api/inventory-items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newItem,
+          lastUpdated: new Date().toISOString()
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setItems(prevItems => [...prevItems, data]);
+        setIsAddModalOpen(false);
+        setNewItem({
+          name: '',
+          description: '',
+          categoryId: 0,
+          sku: '',
+          quantity: 0,
+          minQuantity: 0,
+          location: '',
+        });
+        toast({
+          title: "Success",
+          description: "Item added successfully",
+        });
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to add item');
+      }
+    } catch (error) {
+      console.error('Error adding inventory item:', error);
+      setError('Error adding inventory item. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -143,7 +246,7 @@ export default function InventoryManagement() {
                 <RefreshCcw className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
-              <Button>
+              <Button onClick={() => setIsAddModalOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Item
               </Button>
@@ -171,7 +274,7 @@ export default function InventoryManagement() {
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="">All Categories</SelectItem>
                         {categories.map(category => (
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
@@ -234,6 +337,125 @@ export default function InventoryManagement() {
           <CategoryManagement />
         </TabsContent>
       </Tabs>
+    {/* Add Item Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add New Inventory Item</DialogTitle>
+          </DialogHeader>
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+              {error}
+            </div>
+          )}
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={newItem.name}
+                onChange={handleInputChange}
+                className="col-span-3"
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={newItem.description || ''}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">Category</Label>
+              <div className="col-span-3">
+                <Select onValueChange={handleCategorySelect} value={newItem.categoryId?.toString()}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="sku" className="text-right">SKU</Label>
+              <Input
+                id="sku"
+                name="sku"
+                value={newItem.sku}
+                onChange={handleInputChange}
+                className="col-span-3"
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quantity" className="text-right">Quantity</Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="number"
+                min="0"
+                value={newItem.quantity}
+                onChange={handleNumberInputChange}
+                className="col-span-3"
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="minQuantity" className="text-right">Min Quantity</Label>
+              <Input
+                id="minQuantity"
+                name="minQuantity"
+                type="number"
+                min="0"
+                value={newItem.minQuantity}
+                onChange={handleNumberInputChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">Location</Label>
+              <Input
+                id="location"
+                name="location"
+                value={newItem.location || ''}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button 
+              onClick={handleAddItem} 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Adding...' : 'Add Item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
