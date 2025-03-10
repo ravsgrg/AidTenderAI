@@ -36,6 +36,7 @@ export default function InventoryManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchInventoryItems();
@@ -45,15 +46,18 @@ export default function InventoryManagement() {
   const fetchInventoryItems = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const response = await fetch('/api/inventory-items');
       if (response.ok) {
         const data = await response.json();
         setItems(data);
       } else {
         console.error('Failed to fetch inventory items:', response.statusText);
+        setError(`Failed to fetch inventory items: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error fetching inventory items:', error);
+      setError('Error fetching inventory items. Please try again later.');
     } finally {
       setIsLoading(false);
     }
@@ -61,15 +65,18 @@ export default function InventoryManagement() {
 
   const fetchCategories = async () => {
     try {
+      setError(null);
       const response = await fetch('/api/inventory-categories');
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
       } else {
         console.error('Failed to fetch inventory categories:', response.statusText);
+        setError(`Failed to fetch inventory categories: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setError('Error fetching categories. Please try again later.');
     }
   };
 
@@ -115,6 +122,11 @@ export default function InventoryManagement() {
     setSearchQuery("");
   };
 
+  const handleRefresh = () => {
+    fetchInventoryItems();
+    fetchCategories();
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="inventory">
@@ -126,10 +138,16 @@ export default function InventoryManagement() {
         <TabsContent value="inventory" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold tracking-tight">Inventory Management</h2>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Item
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleRefresh}>
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Item
+              </Button>
+            </div>
           </div>
 
           <Card>
@@ -153,7 +171,7 @@ export default function InventoryManagement() {
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
+                        <SelectItem value="all">All Categories</SelectItem>
                         {categories.map(category => (
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
@@ -169,6 +187,9 @@ export default function InventoryManagement() {
               </div>
             </CardHeader>
             <CardContent>
+              {error && (
+                <div className="text-center py-4 text-red-500">{error}</div>
+              )}
               {isLoading ? (
                 <div className="text-center py-4">Loading inventory items...</div>
               ) : filteredItems.length === 0 ? (
